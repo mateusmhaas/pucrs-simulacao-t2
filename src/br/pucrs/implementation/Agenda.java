@@ -10,9 +10,11 @@ public class Agenda {
 	}
 	
 	public void addEvent(Event e) {
+		System.out.println("AGENDA - Creating event");
 		this.events.add(e);
 	}
 	public Event getNextEvent() {
+		System.out.println("AGENDA - Running next event");
 		Collections.sort(this.events);
 		return this.events.remove(0);
 	}

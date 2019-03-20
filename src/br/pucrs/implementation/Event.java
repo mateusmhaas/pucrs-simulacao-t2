@@ -3,20 +3,17 @@ package br.pucrs.implementation;
 import br.pucrs.helper.EventType;
 
 public class Event implements Comparable<Event> {
-//	private EventType type;
+	private int id;
+	private String queueName;
 	private Double time;
 	private Runnable chainMethod;
-	public Event(Double time, Runnable chainMethod) {
-//		this.type = eventType;
+	public Event(Double time, Runnable chainMethod, String queueName) {
 		this.time = time;
 		this.setChainMethod(chainMethod);
+		this.queueName = queueName;// TODO Adicionar nome Fila
+		this.id = IdGenerator.getNext(this.queueName); 
 	}
-//	public EventType getType() {
-//		return type;
-//	}
-//	public void setType(EventType type) {
-//		this.type = type;
-//	}
+	
 	public Double getTime() {
 		return time;
 	}
@@ -37,5 +34,9 @@ public class Event implements Comparable<Event> {
 		else if(this.time < event.getTime())
 			return -1;
 		return 0;
+	}
+	@Override
+	public String toString() {
+		return "["+this.queueName+"-"+this.id+";"+this.time+"]";
 	}
 }
