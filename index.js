@@ -1,33 +1,15 @@
 "use strict"
 
-/**
- * Seta Variáveis Globais
- */
-
 var config = require("./config.json")
-var interacoes = 200
+
+var Random = require("./Random")
+const random = new Random()
+
+var queues = config.queues
 
 var eventos = [
     { 'key': 'Q0', 'tempo': 1, 'sorteio': 1 },
 ]
-
-class Random {
-    constructor() {
-        this.x_anterior = 19
-        this.M = 4493
-        this.a = 500
-        this.c = 4
-        this.quantidade_iteracoes = 0
-    }
-    linear_random() {
-        this.quantidade_iteracoes += 1
-        let x_atual = (this.a * this.x_anterior + this.c) % this.M
-        this.x_anterior = x_atual
-        return x_atual / this.M
-    }
-}
-
-const random = new Random()
 
 const get_random = (min_max) => {
     return (min_max[1] - min_max[0]) * random.linear_random() + min_max[0];
@@ -35,12 +17,13 @@ const get_random = (min_max) => {
 
 const random_next_event = (key) => {
     var r = random.linear_random();
-    var current = config[key]
+    
+    var current = queues[key]
+    
     for (var k in current.probabilities) {
         r -= current.probabilities[k]
-        if (r <= 0) {
+        if (r <= 0)
             return k
-        }
     }
 }
 var agenda = (key, prev, tempo, sorteio, code) =>
@@ -52,7 +35,9 @@ const get_next_evento = () => {
         if (a.tempo > b.tempo) return -1
         return 0
     })
+
     let next = eventos.pop()
+    
     return next
 }
 
@@ -62,60 +47,76 @@ const eventoCH = (evento, next) => {
         next.fila += 1
         if (next.fila <= next.C)
             agenda(random_next_event(evento.key), evento.key, evento['tempo'], get_random(next.SA), "SA")
-    } else next.perda += 1
-    if (next.entrance){
-        agenda(evento.key, null, evento['tempo'], get_random(next.CH), "entrance")
     }
+    else 
+        next.perda += 1
+
+    if (next.entrance)
+        agenda(evento.key, null, evento['tempo'], get_random(next.CH), "entrance")
 
 }
 
 const eventoSA = (evento, previous) => {
     previous.estados[previous.fila] += evento['sorteio']
     previous.fila -= 1
+
     if (previous.fila >= previous.C)
         agenda(random_next_event(evento.previous), evento.previous, evento['tempo'], get_random(previous.SA), "SA1")
 }
 
 const eventoPIPE = (evento) => {
-    var previous = config[evento.previous]
-    var current = config[evento.key]    
-    if (current) {
+    var previous = queues[evento.previous]
+    var current = queues[evento.key]    
+    
+    if (current)
         eventoCH(evento, current)
-    }
-    if (previous) {
+
+    if (previous)
         eventoSA(evento, previous)
-    }
 }
 
 const run = () => {
-    for (var k in config) {
-        config[k].fila = 0;
-        config[k].perda = 0;
-        config[k].estados = [];
-        for (var i = 0; i <= config[k].K; i++) {
-            config[k].estados[i] = 0;
-        }
+    for (var k in queues) {
+        queues[k].fila = 0;
+        queues[k].perda = 0;
+        queues[k].estados = [];
+
+        for (var i = 0; i <= queues[k].K; i++)
+            queues[k].estados[i] = 0;
     }
-    for (var i = 0; i < interacoes; i++) {
+
+    for (var i = 0; i < config.iterations; i++) {
         const next_evento = get_next_evento()
         eventoPIPE(next_evento)
     }
 }
+
+
+
 const print_statistics = () => {
     console.log("GERANDO STATÍSTICAS: ")
-    // console.log(config)
-    for(var k in config){
+    
+    for (var k in queues){
         console.log("Fila: ", k)
-        console.log("Perdas: ", config[k].perda)
-        console.log("Tempo em cada estado:")
-        console.log(config[k].estados)
-        var totalTime = config[k].estados.reduce((acc, curr) => acc + curr)
+        console.log("Perdas: ", queues[k].perda)
+
+        console.log("\nTempo (un) em cada estado:")
+        queues[k].estados.filter( v => v > 0 )
+            .forEach((value, index)=>{
+                console.log(`\tEstado [${index}]: ${value.toFixed(4)} un`)
+            })
+
+        var totalTime = queues[k].estados.reduce((acc, curr) => acc + curr)
         var probs = []
-        for(var i in config[k].estados) {
-            probs[i] = (config[k].estados[i] / totalTime) * 100;
-        }
-        console.log('Probabilidade percentual de se encontrar em cada estado:')
-        console.log(probs)
+
+        for (var i in queues[k].estados)
+            probs[i] = (queues[k].estados[i] / totalTime) * 100;
+
+        console.log('\nProbabilidade (%) de se encontrar em cada estado:')
+        probs.filter( v => v > 0 )
+            .forEach((value, index) => {
+                console.log(`\tEstado [${index}]: ${value.toFixed(4)}%`)
+            })
 
         console.log("\n___________________________________________________________________\n\n")
     }
