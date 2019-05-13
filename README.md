@@ -13,7 +13,8 @@ cd {{project}}
 npm install
 npm start
 ````
-
+**Documentação do arquivo de configuração**
+* disponível no config.json
 ````js
 {
     "iterations": {type: Int, required: true, obs: "Representa o número de iterações"},
