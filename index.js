@@ -1,20 +1,28 @@
 "use strict"
 
+// carrega arquivo de configuração do programa
 var config = require("./config.json")
 
+//instancia classe que gera random linear
 var Random = require("./Random")
 const random = new Random()
 
 var queues = config.queues
 
+//Agenda inicial
 var eventos = [
     { 'key': 'Q0', 'tempo': 1, 'sorteio': 1 },
 ]
 
+// facilitador para gerar random entre intervalo de valores
 const get_random = (min_max) => {
     return (min_max[1] - min_max[0]) * random.linear_random() + min_max[0];
 }
 
+/**
+* gera próximo evento de acordo com as probabilidades configuradas
+* @param {string} chave da fila que deseja obter o evento 
+*/
 const random_next_event = (key) => {
     var r = random.linear_random();
     
@@ -26,9 +34,21 @@ const random_next_event = (key) => {
             return k
     }
 }
+
+/**
+* Agenda um evento para uma fila
+* @param {String} key chave do evento atual
+* @param {String} prev chave do evento anterior
+* @param {Float} tempo tempo da fila
+* @param {Float} sorteio tempo que precisa ser percorrido para evento ser acionado
+* @param {String} code identificador do evento
+*/
 var agenda = (key, prev, tempo, sorteio, code) =>
     eventos = eventos.concat({ 'key': key, 'previous': prev, 'tempo': (tempo + sorteio), 'sorteio': sorteio, 'code': code })
 
+/**
+* função que retorna próximo evento
+*/
 const get_next_evento = () => {
     eventos.sort((a, b) => {
         if (a.tempo < b.tempo) return 1
@@ -41,6 +61,11 @@ const get_next_evento = () => {
     return next
 }
 
+/**
+* Lida com eventos de Entrada
+* @param {Object} evento
+* @param {Object} next
+*/
 const eventoCH = (evento, next) => {
     if (next.fila < next.K) {
         next.estados[next.fila] += evento['sorteio']
@@ -55,7 +80,11 @@ const eventoCH = (evento, next) => {
         agenda(evento.key, null, evento['tempo'], get_random(next.CH), "entrance")
 
 }
-
+/**
+* Lida com eventos de saída
+* @param {Object} evento
+* @param {Object} next
+*/
 const eventoSA = (evento, previous) => {
     previous.estados[previous.fila] += evento['sorteio']
     previous.fila -= 1
@@ -63,7 +92,10 @@ const eventoSA = (evento, previous) => {
     if (previous.fila >= previous.C)
         agenda(random_next_event(evento.previous), evento.previous, evento['tempo'], get_random(previous.SA), "SA1")
 }
-
+/**
+* Função que encadeia eventos e faz a gestão das entradas e saídas de novos eventos
+* @param {Object} evento
+*/
 const eventoPIPE = (evento) => {
     var previous = queues[evento.previous]
     var current = queues[evento.key]    
@@ -75,6 +107,9 @@ const eventoPIPE = (evento) => {
         eventoSA(evento, previous)
 }
 
+/**
+* Roda simulação de acordo com arquivo de configuração
+*/
 const run = () => {
     for (var k in queues) {
         queues[k].fila = 0;
@@ -92,7 +127,9 @@ const run = () => {
 }
 
 
-
+/**
+* Imprime estatísticas geradas pelo programa
+*/
 const print_statistics = () => {
     console.log("GERANDO STATÍSTICAS: ")
     
@@ -122,6 +159,9 @@ const print_statistics = () => {
     }
 }
 
+/**
+* Ponto de entrada do programa
+*/
 const main = () => {
     run()
     print_statistics()
