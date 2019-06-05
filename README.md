@@ -49,3 +49,36 @@ npm start
     }
 }
 ````
+
+# Simulação T2
+Vamos simular uma agência bancária onde o titular da conta pode realizar operações básicas como atendimento pelo gerente, atendimento no caixa físico, ou utilizar o caixa automático.
+
+## Modelagem
+**1 - ENTRADA - Detector de metais**
+- 2 - caixa automático
+- 3 - caixa físico - normal
+- 4 - caixa físico - prioritário
+- 5 - gerente
+- EXIT - ir embora
+
+**2 - caixa automático**
+- 3 - caixa físico - normal
+- 4 - caixa físico - prioritário
+-	5 - gerente
+-	EXIT - ir embora
+
+**3 - caixa físico - normal**
+-	2 - caixa automático
+-	5 - gerente
+-	EXIT - ir embora
+
+**4 - caixa físico - prioritário**
+-	2 - caixa automático
+-	5 - gerente
+-	EXIT - ir embora
+
+**5 - gerente**
+-	2 - caixa automático
+-	3 - caixa físico - normal
+-	4 - caixa físico - prioritário
+- EXIT - ir embora
