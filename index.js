@@ -11,7 +11,7 @@ var queues = config.queues
 
 //Agenda inicial
 var eventos = [
-    { 'key': 'Q0', 'tempo': 1, 'sorteio': 1 },
+    { 'key': 'ENTRADA', 'tempo': 1, 'sorteio': 1 },
 ]
 
 // facilitador para gerar random entre intervalo de valores
